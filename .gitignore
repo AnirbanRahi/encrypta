@@ -2,7 +2,7 @@
 .venv/
 venv/
 env/
-
+.idea/
 # Compiled Python files
 __pycache__/
 *.pyc
@@ -11,3 +11,6 @@ __pycache__/
 .DS_Store
 Thumbs.db
 gitcommands.txt
+
+#others
+test/
