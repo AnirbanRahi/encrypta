@@ -6,6 +6,10 @@ env/
 # Compiled Python files
 __pycache__/
 *.pyc
+*.py[cod]
+*.pyo
+*.pyd
+*.env
 
 # Optional system files
 .DS_Store
