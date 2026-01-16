@@ -1,5 +1,3 @@
-import hmac
-
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.backends import default_backend
 from pathlib import Path
@@ -35,10 +33,7 @@ fileextension = p.suffix
 if p.suffix == '.enc':
     print(f"{filename} is already encrypted. Try another file.")
     exit(1)
-newfile = filepath / (filename + ".enc")
-print(filepath)
-print(filename)
-print(fileextension)
+newfile = filepath / (filename + fileextension + ".enc")
 
 password = input("Password: ").encode('utf-8')
 
@@ -64,12 +59,9 @@ with open(file, "rb") as finput, open(newfile, "wb") as foutput:
             break
         ciphertext = encryptor.update(data)
         foutput.write(ciphertext)
-        # binary_str = ''.join(f'{byte:08b}' for byte in data)
-        # f'{value:specific_format}', 08b b means binary with 8 bit with zero leading(left)
-        # print(binary_str)
+
     foutput.write(encryptor.finalize())
     foutput.write(encryptor.tag)
-    print("Authentication Key: " + encryptor.tag.hex())
 
 print("Original file size:", os.path.getsize(file))
 print("Encrypted file size:", os.path.getsize(newfile))

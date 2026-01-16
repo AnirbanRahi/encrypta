@@ -1,5 +1,3 @@
-import hmac
-
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.backends import default_backend
 from pathlib import Path
@@ -35,10 +33,7 @@ fileextension = p.suffix
 if p.suffix != '.enc':
     print(f"{filename} is not encrypted. Try another file.")
     exit(1)
-newfile = filepath / (filename + ".txt")
-print(filepath)
-print(filename)
-print(fileextension)
+newfile = filepath / filename
 
 password = input("Password: ").encode('utf-8')
 
@@ -55,6 +50,8 @@ with open(file, "rb") as finput, open(newfile, "wb") as foutput:
         h.verify(passkey)
     except InvalidSignature:
         print("Wrong password")
+        foutput.close()
+        os.remove(newfile)
         exit(1)
     filesize = os.path.getsize(file)
     encryptedsize = filesize - 16 - 12 - 16 - 32  # total ciphertext size
