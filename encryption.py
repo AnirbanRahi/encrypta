@@ -1,3 +1,5 @@
+import hmac
+
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.backends import default_backend
 from pathlib import Path
@@ -5,6 +7,7 @@ import os
 from cryptography.hazmat.primitives import hashes
 
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
+from cryptography.hazmat.primitives import hmac, hashes
 
 
 def passwordkey(password, salt):
@@ -47,10 +50,14 @@ key = passwordkey(password, salt)
 cipher = Cipher(algorithms.AES(key), modes.GCM(nonce), backend=default_backend())
 encryptor = cipher.encryptor()
 
+h = hmac.HMAC(key, hashes.SHA256())
+h.update(salt)
+passkey = h.finalize()
 
 with open(file, "rb") as finput, open(newfile, "wb") as foutput:
     foutput.write(salt)
     foutput.write(nonce)
+    foutput.write(passkey)
     while True:
         data = finput.read(readsize)  # try to read upto readsize and return it
         if not data:
@@ -60,7 +67,7 @@ with open(file, "rb") as finput, open(newfile, "wb") as foutput:
         # binary_str = ''.join(f'{byte:08b}' for byte in data)
         # f'{value:specific_format}', 08b b means binary with 8 bit with zero leading(left)
         # print(binary_str)
-    encryptor.finalize()
+    foutput.write(encryptor.finalize())
     foutput.write(encryptor.tag)
     print("Authentication Key: " + encryptor.tag.hex())
 
