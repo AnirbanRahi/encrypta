@@ -25,6 +25,18 @@ def fixpath(filepath):
 file = input("Enter File Path: ").strip()
 file = fixpath(file)
 
+p = Path(file)
+filepath = p.parent
+filename = p.stem
+fileextension = p.suffix
+if p.suffix == '.enc':
+    print(f"{filename} is already encrypted. Try another file.")
+    exit(1)
+newfile = filepath / (filename + ".enc")
+print(filepath)
+print(filename)
+print(fileextension)
+
 password = input("Password: ").encode('utf-8')
 
 readsize = 512 * 1024  # 512 KB
@@ -35,14 +47,6 @@ key = passwordkey(password, salt)
 cipher = Cipher(algorithms.AES(key), modes.GCM(nonce), backend=default_backend())
 encryptor = cipher.encryptor()
 
-p = Path(file)
-filepath = p.parent
-filename = p.stem
-fileextension = p.suffix
-newfile = filepath / (filename + ".enc")
-print(filepath)
-print(filename)
-print(fileextension)
 
 with open(file, "rb") as finput, open(newfile, "wb") as foutput:
     foutput.write(salt)
@@ -59,3 +63,6 @@ with open(file, "rb") as finput, open(newfile, "wb") as foutput:
     encryptor.finalize()
     foutput.write(encryptor.tag)
     print("Authentication Key: " + encryptor.tag.hex())
+
+print("Original file size:", os.path.getsize(file))
+print("Encrypted file size:", os.path.getsize(newfile))

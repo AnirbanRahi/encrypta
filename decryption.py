@@ -25,18 +25,21 @@ def fixpath(filepath):
 file = input("Enter File Path: ").strip()
 file = fixpath(file)
 
-password = input("Password: ").encode('utf-8')
-
-readsize = 512 * 1024  # 512 KB
-
 p = Path(file)
 filepath = p.parent
 filename = p.stem
 fileextension = p.suffix
+if p.suffix != '.enc':
+    print(f"{filename} is not encrypted. Try another file.")
+    exit(1)
 newfile = filepath / (filename + ".txt")
 print(filepath)
 print(filename)
 print(fileextension)
+
+password = input("Password: ").encode('utf-8')
+
+readsize = 512 * 1024  # 512 KB
 
 with open(file, "rb") as finput, open(newfile, "wb") as foutput:
     salt = finput.read(16)
