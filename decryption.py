@@ -9,6 +9,7 @@ from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 from cryptography.exceptions import InvalidTag, InvalidSignature
 from cryptography.hazmat.primitives import hmac, hashes
 
+
 def passwordkey(password, salt):
     kdf = PBKDF2HMAC(algorithm=hashes.SHA256(), length=32, salt=salt, iterations=200000, backend=default_backend())
     return kdf.derive(password)
@@ -76,6 +77,8 @@ with open(file, "rb") as finput, open(newfile, "wb") as foutput:
         decryptor.finalize()
     except InvalidTag:
         print("Decryption failed: wrong password or corrupted file")
+        foutput.close()
+        os.remove(newfile)
         exit(1)
 
 print("Successfully decrypted")
