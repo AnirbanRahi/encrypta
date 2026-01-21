@@ -69,4 +69,5 @@ class Encryptor:
             foutput.write(encryptor.finalize())
             foutput.write(encryptor.tag)
 
+        os.remove(file)
         return newfile

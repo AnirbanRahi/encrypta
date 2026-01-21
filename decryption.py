@@ -79,5 +79,5 @@ class Decryptor:
                 os.remove(newfile)
                 raise ValueError("Decryption failed: wrong password or corrupted file")
 
-        print("Successfully decrypted")
+        os.remove(file)
         return newfile
