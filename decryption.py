@@ -1,3 +1,5 @@
+import zipfile
+
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.backends import default_backend
 from pathlib import Path
@@ -6,6 +8,8 @@ from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 from cryptography.exceptions import InvalidTag, InvalidSignature
 from cryptography.hazmat.primitives import hmac, hashes
+
+
 
 
 class Decryptor:
@@ -39,7 +43,12 @@ class Decryptor:
         if p.suffix != '.enc':
             raise ValueError(f"{filename} is not encrypted. Try another file.")
 
-        newfile = filepath / filename
+        is_dir = filename.endswith(".dir")
+        if is_dir:
+            filename = filename[:-4]
+            newfile = filepath / (filename + ".zip")
+        else:
+            newfile = filepath / filename
         password = password.encode('utf-8')
 
         with open(file, "rb") as finput, open(newfile, "wb") as foutput:
@@ -79,5 +88,17 @@ class Decryptor:
                 os.remove(newfile)
                 raise ValueError("Decryption failed: wrong password or corrupted file")
 
-        os.remove(file)
-        return newfile
+        if is_dir:
+            foldername = filepath / filename
+            with zipfile.ZipFile(newfile, "r") as zip_ref:
+                zip_ref.extractall(foldername)
+            os.remove(newfile)
+            return foldername
+        else:
+            os.remove(file)
+            return newfile
+
+
+if __name__ == "__main__":
+    e = Decryptor()
+    e.decrypt("C:/Users/anirbanrahi/Downloads/mysql-connector-j-9.4.0.dir.enc", "12345")
