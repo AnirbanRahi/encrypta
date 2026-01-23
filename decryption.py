@@ -99,6 +99,3 @@ class Decryptor:
             return newfile
 
 
-if __name__ == "__main__":
-    e = Decryptor()
-    e.decrypt("C:/Users/anirbanrahi/Downloads/mysql-connector-j-9.4.0.dir.enc", "12345")

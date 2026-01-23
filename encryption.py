@@ -83,8 +83,3 @@ class Encryptor:
         else:
             os.remove(file)
         return newfile
-
-
-if __name__ == "__main__":
-    e = Encryptor()
-    e.encrypt("C:/Users/anirbanrahi/Downloads/mysql-connector-j-9.4.0", "12345")
