@@ -10,8 +10,6 @@ from cryptography.exceptions import InvalidTag, InvalidSignature
 from cryptography.hazmat.primitives import hmac, hashes
 
 
-
-
 class Decryptor:
     def __init__(self, readsize=512 * 1024, iteration=200000):
         self.readsize = readsize
@@ -93,9 +91,8 @@ class Decryptor:
             with zipfile.ZipFile(newfile, "r") as zip_ref:
                 zip_ref.extractall(foldername)
             os.remove(newfile)
+            os.remove(file)
             return foldername
         else:
             os.remove(file)
             return newfile
-
-
