@@ -1,5 +1,6 @@
 import shutil
 
+
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.backends import default_backend
 from pathlib import Path
@@ -46,7 +47,7 @@ class Encryptor:
             zipname = str(p)
             shutil.make_archive(zipname, "zip", p)
             readfile = zipname + ".zip"
-            newfile = Path(zipname + ".Folder" + ".enc")
+            newfile = Path(zipname + ".dir" + ".enc")
         else:
             readfile = file
             newfile = filepath / (filename + fileextension + ".enc")
@@ -82,3 +83,8 @@ class Encryptor:
         else:
             os.remove(file)
         return newfile
+
+
+if __name__ == "__main__":
+    e = Encryptor()
+    e.encrypt("C:/Users/anirbanrahi/Downloads/mysql-connector-j-9.4.0", "12345")
