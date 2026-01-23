@@ -1,82 +1,236 @@
-import tkinter as tk
 from pathlib import Path
-from tkinter import filedialog, messagebox, simpledialog
 from encryption import Encryptor
 from decryption import Decryptor
+import sys
+import PyQt6.QtWidgets as qt
+from PyQt6.QtGui import QFont, QColor, QPalette
+from PyQt6.QtCore import Qt
+from styles import *
 
 
-class UI:
+class UI(qt.QWidget):
     def __init__(self):
-        self.window = tk.Tk()
-        self.window.title("AES-GCM Encryption Tool")
-        self.window.geometry("800x600")
+        super().__init__()
+
+        self.setWindowTitle("AES-GCM Encryption Tool")
+        self.resize(800, 400)
 
         self.encryptor = Encryptor()
         self.decryptor = Decryptor()
-        self.filepathenc = tk.StringVar()
-        self.filepathdec = tk.StringVar()
+        self.filepathenc = ""
+        self.filepathdec = ""
+
+        # Active mode flags
+        self.enc_mode = "file"
+        self.dec_mode = "file"
+
+        # GUI elements
+        self.lineenc = None
+        self.linedec = None
+        self.encrypt_file_btn = None
+        self.encrypt_folder_btn = None
+        self.decrypt_file_btn = None
+        self.decrypt_folder_btn = None
+        self.browse_button_enc = None
+        self.browse_button_dec = None
+        self.enc_folder_btn = None
+        self.dec_folder_btn = None
+        self.dec_file_btn = None
+        self.enc_file_btn = None
+
+        # Set white background, black text
+        palette = QPalette()
+        palette.setColor(QPalette.ColorRole.Window, QColor("white"))
+        palette.setColor(QPalette.ColorRole.WindowText, QColor("black"))
+        self.setPalette(palette)
 
         self.setupui()
 
-    def _browsefileenc(self):
-        path = filedialog.askopenfilename()
-        if path:
-            self.filepathenc.set(path)
-
-    def _browsefiledec(self):
-        path = filedialog.askopenfilename()
-        if path:
-            self.filepathdec.set(path)
-
     def setupui(self):
+        font_header = QFont("Arial", 14, QFont.Weight.Bold)
+        font_button = QFont("Arial", 11)
 
-        tk.Button(self.window, text="Encrypt", command=self.encryptfile).grid(row=0, column=0, padx=10, pady=10)
-        tk.Entry(self.window, textvariable=self.filepathenc, width=80).grid(row=0, column=1, padx=10, pady=10)
-        tk.Button(self.window, text="Browse", command=self._browsefileenc).grid(row=0, column=2, padx=10, pady=10)
+        main_layout = qt.QVBoxLayout()
+        main_layout.setSpacing(20)
 
-        tk.Button(self.window, text="Decrypt", command=self.decryptfile).grid(row=1, column=0, padx=10, pady=10)
-        tk.Entry(self.window, textvariable=self.filepathdec, width=80).grid(row=1, column=1, padx=10, pady=10)
-        tk.Button(self.window, text="Browse", command=self._browsefiledec).grid(row=1, column=2, padx=10, pady=10)
+        # Encryption Section
+        enc_label = qt.QLabel("Encryption")
+        enc_label.setFont(font_header)
+        main_layout.addWidget(enc_label)
 
+        # Mode buttons
+        enc_mode_layout = qt.QHBoxLayout()
+        self.enc_file_btn = qt.QPushButton("Encrypt File")
+        self.enc_folder_btn = qt.QPushButton("Encrypt Folder")
+        self.enc_file_btn.setCheckable(True)
+        self.enc_folder_btn.setCheckable(True)
+        self.enc_file_btn.setFont(font_button)
+        self.enc_folder_btn.setFont(font_button)
+        self.enc_file_btn.setChecked(True)
+        self.update_enc_mode_style()
+
+        self.enc_file_btn.clicked.connect(lambda: self.set_enc_mode("file"))
+        self.enc_folder_btn.clicked.connect(lambda: self.set_enc_mode("folder"))
+
+        enc_mode_layout.addWidget(self.enc_file_btn)
+        enc_mode_layout.addWidget(self.enc_folder_btn)
+        main_layout.addLayout(enc_mode_layout)
+
+        # Browse and path
+        enc_browse_layout = qt.QHBoxLayout()
+        self.lineenc = qt.QLineEdit()
+        self.lineenc.setPlaceholderText("Select file or folder to encrypt")
+        self.lineenc.setStyleSheet(line_style)
+        browse_btn_enc = qt.QPushButton("Browse")
+        browse_btn_enc.setFont(font_button)
+        browse_btn_enc.setStyleSheet(active_button)
+        browse_btn_enc.clicked.connect(self.file_or_folder_enc)
+        enc_browse_layout.addWidget(self.lineenc)
+        enc_browse_layout.addWidget(browse_btn_enc)
+        main_layout.addLayout(enc_browse_layout)
+
+        # Encrypt button
+        enc_action_btn = qt.QPushButton("Encrypt")
+        enc_action_btn.setFont(font_button)
+        enc_action_btn.setStyleSheet(enc_dec_button)
+        enc_action_btn.clicked.connect(self.encryptfile)
+        main_layout.addWidget(enc_action_btn)
+
+        # Decryption Section
+        dec_label = qt.QLabel("Decryption")
+        dec_label.setFont(font_header)
+        main_layout.addWidget(dec_label)
+
+        # Mode buttons
+        dec_mode_layout = qt.QHBoxLayout()
+        self.dec_file_btn = qt.QPushButton("Decrypt File")
+        self.dec_folder_btn = qt.QPushButton("Decrypt Folder")
+        self.dec_file_btn.setFont(font_button)
+        self.dec_folder_btn.setFont(font_button)
+        self.dec_file_btn.setCheckable(True)
+        self.dec_folder_btn.setCheckable(True)
+        self.dec_file_btn.setChecked(True)
+        self.update_dec_mode_style()
+        self.dec_file_btn.clicked.connect(lambda: self.set_dec_mode("file"))
+        self.dec_folder_btn.clicked.connect(lambda: self.set_dec_mode("folder"))
+        dec_mode_layout.addWidget(self.dec_file_btn)
+        dec_mode_layout.addWidget(self.dec_folder_btn)
+        main_layout.addLayout(dec_mode_layout)
+
+        # Browse and path
+        dec_browse_layout = qt.QHBoxLayout()
+        self.linedec = qt.QLineEdit()
+        self.linedec.setPlaceholderText("Select file or folder to decrypt")
+        self.linedec.setStyleSheet(line_style)
+        browse_btn_dec = qt.QPushButton("Browse")
+        browse_btn_dec.setFont(font_button)
+        browse_btn_dec.setStyleSheet(active_button)
+        browse_btn_dec.clicked.connect(self.file_or_folder_dec)
+        dec_browse_layout.addWidget(self.linedec)
+        dec_browse_layout.addWidget(browse_btn_dec)
+        main_layout.addLayout(dec_browse_layout)
+
+        # Decrypt button
+        dec_action_btn = qt.QPushButton("Decrypt")
+        dec_action_btn.setStyleSheet(enc_dec_button)
+        dec_action_btn.setFont(font_button)
+        dec_action_btn.clicked.connect(self.decryptfile)
+        main_layout.addWidget(dec_action_btn)
+
+        self.setLayout(main_layout)
+
+    #  Mode styling
+    def set_enc_mode(self, mode):
+        self.enc_mode = mode
+        self.update_enc_mode_style()
+        self.lineenc.clear()
+        self.filepathenc = ""
+
+    def set_dec_mode(self, mode):
+        self.dec_mode = mode
+        self.update_dec_mode_style()
+        self.linedec.clear()
+        self.filepathdec = ""
+
+    def update_enc_mode_style(self):
+        if self.enc_mode == "file":
+            self.enc_file_btn.setStyleSheet(active_button)
+            self.enc_folder_btn.setStyleSheet(inactive_button)
+        else:
+            self.enc_file_btn.setStyleSheet(inactive_button)
+            self.enc_folder_btn.setStyleSheet(active_button)
+
+    def update_dec_mode_style(self):
+        if self.dec_mode == "file":
+            self.dec_file_btn.setStyleSheet(active_button)
+            self.dec_folder_btn.setStyleSheet(inactive_button)
+        else:
+            self.dec_file_btn.setStyleSheet(inactive_button)
+            self.dec_folder_btn.setStyleSheet(active_button)
+
+    # Browse
+    def file_or_folder_enc(self):
+        if self.enc_mode == "file":
+            path, _ = qt.QFileDialog.getOpenFileName(self, "Select File")
+        else:
+            path = qt.QFileDialog.getExistingDirectory(self, "Select Folder")
+        if path:
+            self.filepathenc = str(path)
+            self.lineenc.setText(self.filepathenc)
+
+    def file_or_folder_dec(self):
+        if self.dec_mode == "file":
+            path, _ = qt.QFileDialog.getOpenFileName(self, "Select File")
+        else:
+            path = qt.QFileDialog.getExistingDirectory(self, "Select Folder")
+        if path:
+            self.filepathdec = str(path)
+            self.linedec.setText(self.filepathdec)
+
+    # Encryption
     def encryptfile(self):
-        if not self.filepathenc.get():
-            messagebox.showerror("Error", "No file selected for encryption")
+        if not self.filepathenc:
+            qt.QMessageBox.critical(self, "Error", "No file or folder selected for encryption")
             return
-        string_path = Path(self.filepathenc.get())
-        if string_path.suffix == ".enc":
-            messagebox.showerror("Error", "This file is already encrypted!")
-            return
-        password = simpledialog.askstring("Password", "Enter Password")
-        if not password or len(password) < 3:
-            messagebox.showerror("Error", "Password must be atlest 3 characters")
-            return
-        else:
-            try:
-                newfile = self.encryptor.encrypt(self.filepathenc.get(), password)
-                messagebox.showinfo("Success", f"File encrypted: {newfile}")
-            except Exception as e:
-                messagebox.showerror("Error", str(e))
 
+        string_path = Path(self.filepathenc)
+        if string_path.suffix == ".enc":
+            qt.QMessageBox.critical(self, "Error", "This file is already encrypted.")
+            return
+        password, ok = qt.QInputDialog.getText(self, "Password", "Enter Password:")
+        if not ok or not password or len(password) < 3:
+            qt.QMessageBox.critical(self, "Error", "Password must be at least 3 characters")
+            return
+
+        try:
+            newfile = self.encryptor.encrypt(self.filepathenc, password)
+            qt.QMessageBox.information(self, "Success", f"Encrypted: {newfile}")
+        except Exception as e:
+            qt.QMessageBox.critical(self, "Error", str(e))
+
+    #  Decryption
     def decryptfile(self):
-        if not self.filepathdec.get():
-            messagebox.showerror("Error", "No file selected for decryption")
+        if not self.filepathdec:
+            qt.QMessageBox.critical(self, "Error", "No file or folder selected for decryption")
             return
-        string_path = Path(self.filepathdec.get())
+        string_path = Path(self.filepathenc)
         if string_path.suffix != ".enc":
-            messagebox.showerror("Error", "This file is not encrypted!")
+            qt.QMessageBox.critical(self, "Error", "This file is not encrypted.")
             return
-        password = simpledialog.askstring("Password", "Enter Password")
-        if not password or len(password) < 3:
-            messagebox.showerror("Error", "Password must be atlest 3 characters")
+        password, ok = qt.QInputDialog.getText(self, "Password", "Enter Password:")
+        if not ok or not password or len(password) < 3:
+            qt.QMessageBox.critical(self, "Error", "Password must be at least 3 characters")
             return
-        else:
-            try:
-                newfile = self.decryptor.decrypt(self.filepathdec.get(), password)
-                messagebox.showinfo("Success", f"File encrypted: {newfile}")
-            except Exception as e:
-                messagebox.showerror("Error", str(e))
+
+        try:
+            newfile = self.decryptor.decrypt(self.filepathdec, password)
+            qt.QMessageBox.information(self, "Success", f"Decrypted: {newfile}")
+        except Exception as e:
+            qt.QMessageBox.critical(self, "Error", str(e))
 
 
 if __name__ == "__main__":
-    ui = UI()
-    ui.window.mainloop()
+    app = qt.QApplication(sys.argv)
+    window = UI()
+    window.show()
+    sys.exit(app.exec())
