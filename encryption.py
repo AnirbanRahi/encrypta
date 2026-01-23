@@ -1,3 +1,5 @@
+import shutil
+
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.backends import default_backend
 from pathlib import Path
@@ -40,7 +42,14 @@ class Encryptor:
         if p.suffix == '.enc':
             raise ValueError("File is already encrypted")
 
-        newfile = filepath / (filename + fileextension + ".enc")
+        if p.is_dir():
+            zipname = str(p)
+            shutil.make_archive(zipname, "zip", p)
+            readfile = zipname + ".zip"
+            newfile = Path(zipname + ".Folder" + ".enc")
+        else:
+            readfile = file
+            newfile = filepath / (filename + fileextension + ".enc")
 
         password = password.encode('utf-8')
 
@@ -54,8 +63,7 @@ class Encryptor:
         h = hmac.HMAC(key, hashes.SHA256())
         h.update(salt)
         passkey = h.finalize()
-
-        with open(file, "rb") as finput, open(newfile, "wb") as foutput:
+        with open(readfile, "rb") as finput, open(newfile, "wb") as foutput:
             foutput.write(salt)
             foutput.write(nonce)
             foutput.write(passkey)
@@ -68,6 +76,9 @@ class Encryptor:
 
             foutput.write(encryptor.finalize())
             foutput.write(encryptor.tag)
-
-        os.remove(file)
+        if p.is_dir():
+            shutil.rmtree(p)
+            os.remove(readfile)
+        else:
+            os.remove(file)
         return newfile
