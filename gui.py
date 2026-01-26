@@ -6,6 +6,7 @@ import PyQt6.QtWidgets as qt
 from PyQt6.QtGui import QFont, QColor, QPalette
 from PyQt6.QtCore import Qt
 from styles import *
+from PyQt6.QtWidgets import QStackedWidget
 
 
 class UI(qt.QWidget):
@@ -22,19 +23,12 @@ class UI(qt.QWidget):
 
         # Active mode flags
         self.enc_mode = "file"
-        self.dec_mode = "file"
 
         # GUI elements
         self.lineenc = None
         self.linedec = None
-        self.encrypt_file_btn = None
-        self.encrypt_folder_btn = None
-        self.decrypt_file_btn = None
-        self.decrypt_folder_btn = None
-        self.browse_button_enc = None
-        self.browse_button_dec = None
+
         self.enc_folder_btn = None
-        self.dec_folder_btn = None
         self.dec_file_btn = None
         self.enc_file_btn = None
 
@@ -83,7 +77,7 @@ class UI(qt.QWidget):
         self.lineenc.setStyleSheet(line_style)
         browse_btn_enc = qt.QPushButton("Browse")
         browse_btn_enc.setFont(font_button)
-        browse_btn_enc.setStyleSheet(active_button)
+        browse_btn_enc.setStyleSheet(inactive_button)
         browse_btn_enc.clicked.connect(self.file_or_folder_enc)
         enc_browse_layout.addWidget(self.lineenc)
         enc_browse_layout.addWidget(browse_btn_enc)
@@ -104,28 +98,22 @@ class UI(qt.QWidget):
         # Mode buttons
         dec_mode_layout = qt.QHBoxLayout()
         self.dec_file_btn = qt.QPushButton("Decrypt File")
-        self.dec_folder_btn = qt.QPushButton("Decrypt Folder")
         self.dec_file_btn.setFont(font_button)
-        self.dec_folder_btn.setFont(font_button)
         self.dec_file_btn.setCheckable(True)
-        self.dec_folder_btn.setCheckable(True)
         self.dec_file_btn.setChecked(True)
-        self.update_dec_mode_style()
-        self.dec_file_btn.clicked.connect(lambda: self.set_dec_mode("file"))
-        self.dec_folder_btn.clicked.connect(lambda: self.set_dec_mode("folder"))
+        self.dec_file_btn.setStyleSheet(inactive_button)
         dec_mode_layout.addWidget(self.dec_file_btn)
-        dec_mode_layout.addWidget(self.dec_folder_btn)
         main_layout.addLayout(dec_mode_layout)
 
         # Browse and path
         dec_browse_layout = qt.QHBoxLayout()
         self.linedec = qt.QLineEdit()
-        self.linedec.setPlaceholderText("Select file or folder to decrypt")
+        self.linedec.setPlaceholderText("Select file to decrypt")
         self.linedec.setStyleSheet(line_style)
         browse_btn_dec = qt.QPushButton("Browse")
         browse_btn_dec.setFont(font_button)
-        browse_btn_dec.setStyleSheet(active_button)
-        browse_btn_dec.clicked.connect(self.file_or_folder_dec)
+        browse_btn_dec.clicked.connect(self.file_dec)
+        browse_btn_dec.setStyleSheet(inactive_button)
         dec_browse_layout.addWidget(self.linedec)
         dec_browse_layout.addWidget(browse_btn_dec)
         main_layout.addLayout(dec_browse_layout)
@@ -146,12 +134,6 @@ class UI(qt.QWidget):
         self.lineenc.clear()
         self.filepathenc = ""
 
-    def set_dec_mode(self, mode):
-        self.dec_mode = mode
-        self.update_dec_mode_style()
-        self.linedec.clear()
-        self.filepathdec = ""
-
     def update_enc_mode_style(self):
         if self.enc_mode == "file":
             self.enc_file_btn.setStyleSheet(active_button)
@@ -159,14 +141,6 @@ class UI(qt.QWidget):
         else:
             self.enc_file_btn.setStyleSheet(inactive_button)
             self.enc_folder_btn.setStyleSheet(active_button)
-
-    def update_dec_mode_style(self):
-        if self.dec_mode == "file":
-            self.dec_file_btn.setStyleSheet(active_button)
-            self.dec_folder_btn.setStyleSheet(inactive_button)
-        else:
-            self.dec_file_btn.setStyleSheet(inactive_button)
-            self.dec_folder_btn.setStyleSheet(active_button)
 
     # Browse
     def file_or_folder_enc(self):
@@ -178,11 +152,8 @@ class UI(qt.QWidget):
             self.filepathenc = str(path)
             self.lineenc.setText(self.filepathenc)
 
-    def file_or_folder_dec(self):
-        if self.dec_mode == "file":
-            path, _ = qt.QFileDialog.getOpenFileName(self, "Select File")
-        else:
-            path = qt.QFileDialog.getExistingDirectory(self, "Select Folder")
+    def file_dec(self):
+        path, _ = qt.QFileDialog.getOpenFileName(self, "Select File")
         if path:
             self.filepathdec = str(path)
             self.linedec.setText(self.filepathdec)
@@ -194,7 +165,10 @@ class UI(qt.QWidget):
             return
 
         string_path = Path(self.filepathenc)
-        if string_path.suffix == ".enc":
+        if not string_path.exists():
+            qt.QMessageBox.critical(self, "Error", "Selected path does not exist")
+            return
+        if string_path.name.endswith(".enc"):
             qt.QMessageBox.critical(self, "Error", "This file is already encrypted.")
             return
         password, ok = qt.QInputDialog.getText(self, "Password", "Enter Password:")
@@ -213,8 +187,11 @@ class UI(qt.QWidget):
         if not self.filepathdec:
             qt.QMessageBox.critical(self, "Error", "No file or folder selected for decryption")
             return
-        string_path = Path(self.filepathenc)
-        if string_path.suffix != ".enc":
+        string_path = Path(self.filepathdec)
+        if not string_path.exists():
+            qt.QMessageBox.critical(self, "Error", "Selected path does not exist")
+            return
+        if not string_path.name.endswith(".enc"):
             qt.QMessageBox.critical(self, "Error", "This file is not encrypted.")
             return
         password, ok = qt.QInputDialog.getText(self, "Password", "Enter Password:")
