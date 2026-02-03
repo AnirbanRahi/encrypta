@@ -15,7 +15,8 @@ __pycache__/
 .DS_Store
 Thumbs.db
 gitcommands.txt
-
+requirements.txt
 #others
 test/
 notebook/
+data/

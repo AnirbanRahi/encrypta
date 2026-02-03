@@ -1,4 +1,7 @@
 from pathlib import Path
+
+from PyQt6 import sip
+import bcrypt
 from encryption import Encryptor
 from decryption import Decryptor
 import sys
@@ -6,7 +9,7 @@ import PyQt6.QtWidgets as qt
 from PyQt6.QtGui import QFont, QColor, QPalette
 from PyQt6.QtCore import Qt
 from styles import *
-from PyQt6.QtWidgets import QStackedWidget
+from PyQt6.QtWidgets import QStackedWidget, QLineEdit
 
 
 class UI(qt.QWidget):
@@ -23,7 +26,7 @@ class UI(qt.QWidget):
 
         # Active mode flags
         self.enc_mode = "file"
-
+        self.passwordstored = ""
         # GUI elements
         self.lineenc = None
         self.linedec = None
@@ -38,9 +41,115 @@ class UI(qt.QWidget):
         palette.setColor(QPalette.ColorRole.WindowText, QColor("black"))
         self.setPalette(palette)
 
-        self.setupui()
+        # Page controls
+        self.stack = QStackedWidget()
 
-    def setupui(self):
+        self.page0 = qt.QWidget()
+        self.loginui(self.page0)
+        self.stack.addWidget(self.page0)
+
+        self.page1 = qt.QWidget()
+        self.setupui(self.page1)
+        self.stack.addWidget(self.page1)
+
+        main_layout = qt.QVBoxLayout()
+        main_layout.addWidget(self.stack)
+        self.setLayout(main_layout)
+
+    def loginui(self, widget):
+        font_button = QFont("Arial", 16)
+
+        main_layout = qt.QVBoxLayout()
+        main_layout.setSpacing(20)
+
+        passwordset = self.checkdir()
+
+        passline = QLineEdit()
+        passline.setPlaceholderText("Enter Password")
+        passline.setStyleSheet(line_style)
+
+        if not passwordset:
+            setlogbutton = qt.QPushButton("Set Password")
+            setlogbutton.setStyleSheet("color: black; font-size: 20px;")
+            button = qt.QPushButton("Set Password")
+            button.setFont(font_button)
+            button.setStyleSheet(enc_dec_button)
+            button.clicked.connect(self.setpassword)
+            passline.clear()
+
+        else:
+            setlogbutton = qt.QPushButton("Login")
+            setlogbutton.setStyleSheet("color: black; font-size: 20px;")
+            button = qt.QPushButton("Login")
+            button.setFont(font_button)
+            button.setStyleSheet(enc_dec_button)
+            button.clicked.connect(lambda: self.handle_login(passline))
+
+        main_layout.addWidget(setlogbutton)
+        main_layout.addWidget(passline)
+        main_layout.addWidget(button)
+
+        widget.setLayout(main_layout)
+
+    def checkpassword(self, passwrd):
+        dir = Path("data/folder5")
+        file = dir / "auth.dat"
+        temp = file.read_bytes()
+        return bcrypt.checkpw(passwrd.encode(), temp)
+
+    def setpassword(self):
+        passline = self.page0.findChild(QLineEdit)
+        password = passline.text().strip()
+        if not password:
+            qt.QMessageBox.critical(self, "Error", "Password cannot be empty")
+            return
+
+        # Save the password
+        dir = Path("data/folder5")
+        dir.mkdir(parents=True, exist_ok=True)
+        file = dir / "auth.dat"
+        hashed = bcrypt.hashpw(password.encode(), bcrypt.gensalt())
+        file.write_bytes(hashed)
+
+        # Rebuild login UI for entering the password
+        # First clear old layout
+        old_layout = self.page0.layout()
+        if old_layout:
+            while old_layout.count():
+                item = old_layout.takeAt(0)
+                widget = item.widget()
+                if widget:
+                    widget.deleteLater()
+            sip.delete(old_layout)
+
+        self.loginui(self.page0)
+        self.stack.setCurrentIndex(0)
+        qt.QMessageBox.information(self, "Success", "Password saved! Please login now.")
+
+    def handle_login(self, passline):
+        password = passline.text().strip()
+        if not password:
+            qt.QMessageBox.critical(self, "Error", "Password cannot be empty")
+            return
+        if self.checkpassword(password):
+            self.stack.setCurrentIndex(1)
+        else:
+            qt.QMessageBox.critical(self, "Error", "Wrong password")
+            passline.clear()
+
+
+    def checkdir(self):
+        dir = Path("data/folder5")
+        file = dir / "auth.dat"
+        if not dir.exists():
+            dir.mkdir(parents=True, exist_ok=True)
+
+        if not file.exists():
+            return False
+        else:
+            return True
+
+    def setupui(self, widget):
         font_header = QFont("Arial", 14, QFont.Weight.Bold)
         font_button = QFont("Arial", 11)
 
@@ -125,7 +234,7 @@ class UI(qt.QWidget):
         dec_action_btn.clicked.connect(self.decryptfile)
         main_layout.addWidget(dec_action_btn)
 
-        self.setLayout(main_layout)
+        widget.setLayout(main_layout)
 
     #  Mode styling
     def set_enc_mode(self, mode):
@@ -209,5 +318,6 @@ class UI(qt.QWidget):
 if __name__ == "__main__":
     app = qt.QApplication(sys.argv)
     window = UI()
+    window.checkdir()
     window.show()
     sys.exit(app.exec())
