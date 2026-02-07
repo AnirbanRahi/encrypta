@@ -6,7 +6,7 @@ from encryption import Encryptor
 from decryption import Decryptor
 import sys
 import PyQt6.QtWidgets as qt
-from PyQt6.QtGui import QFont, QColor, QPalette
+from PyQt6.QtGui import QFont, QColor, QPalette, QPixmap
 from PyQt6.QtCore import Qt
 from styles import *
 from PyQt6.QtWidgets import QStackedWidget, QLineEdit
@@ -53,14 +53,38 @@ class UI(qt.QWidget):
         self.stack.addWidget(self.page1)
 
         main_layout = qt.QVBoxLayout()
+        main_layout.setContentsMargins(0, 0, 0, 0)  # Add this line
+        main_layout.setSpacing(0)
         main_layout.addWidget(self.stack)
         self.setLayout(main_layout)
 
     def loginui(self, widget):
+
         font_button = QFont("Arial", 16)
 
-        main_layout = qt.QVBoxLayout()
-        main_layout.setSpacing(20)
+        full_layout = qt.QHBoxLayout()
+        full_layout.setSpacing(20)
+        full_layout.setContentsMargins(0, 0, 0, 0)
+
+        # image
+        picwidget = qt.QWidget()
+        piclayout = qt.QVBoxLayout()
+        piclayout.setContentsMargins(0, 0, 0, 0)
+        piclayout.setSpacing(0)
+        logpicture = qt.QLabel()
+        logpicture.setContentsMargins(0, 0, 0, 0)
+        pixmap = QPixmap("materials/login2.jpg")
+        pixmap = pixmap.scaled(400, 400, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
+        logpicture.setPixmap(pixmap)
+        logpicture.setScaledContents(True)
+        piclayout.addWidget(logpicture)
+        picwidget.setLayout(piclayout)
+
+        # form
+        formwidget = qt.QWidget()
+        formlayout = qt.QVBoxLayout()
+        formlayout.setContentsMargins(0, 0, 0, 0)
+        formlayout.setSpacing(20)
 
         passwordset = self.checkdir()
 
@@ -85,11 +109,17 @@ class UI(qt.QWidget):
             button.setStyleSheet(enc_dec_button)
             button.clicked.connect(lambda: self.handle_login(passline))
 
-        main_layout.addWidget(setlogbutton)
-        main_layout.addWidget(passline)
-        main_layout.addWidget(button)
+        formlayout.addStretch()
+        formlayout.addWidget(setlogbutton)
+        formlayout.addWidget(passline)
+        formlayout.addWidget(button)
+        formlayout.addStretch()
+        formwidget.setLayout(formlayout)
 
-        widget.setLayout(main_layout)
+        full_layout.addWidget(picwidget, 1)
+        full_layout.addWidget(formwidget, 1)
+
+        widget.setLayout(full_layout)
 
     def checkpassword(self, passwrd):
         dir = Path("data/folder5")
@@ -136,7 +166,6 @@ class UI(qt.QWidget):
         else:
             qt.QMessageBox.critical(self, "Error", "Wrong password")
             passline.clear()
-
 
     def checkdir(self):
         dir = Path("data/folder5")
@@ -280,9 +309,13 @@ class UI(qt.QWidget):
         if string_path.name.endswith(".enc"):
             qt.QMessageBox.critical(self, "Error", "This file is already encrypted.")
             return
-        password, ok = qt.QInputDialog.getText(self, "Password", "Enter Password:")
+        password, ok = qt.QInputDialog.getText(self, "Ask Password", "Enter Master Password:")
         if not ok or not password or len(password) < 3:
             qt.QMessageBox.critical(self, "Error", "Password must be at least 3 characters")
+            return
+
+        if not self.checkpassword(password):
+            qt.QMessageBox.critical(self, "Error", "Master Password Wrong")
             return
 
         try:
@@ -303,9 +336,12 @@ class UI(qt.QWidget):
         if not string_path.name.endswith(".enc"):
             qt.QMessageBox.critical(self, "Error", "This file is not encrypted.")
             return
-        password, ok = qt.QInputDialog.getText(self, "Password", "Enter Password:")
+        password, ok = qt.QInputDialog.getText(self, "Ask Password", "Enter Master Password:")
         if not ok or not password or len(password) < 3:
             qt.QMessageBox.critical(self, "Error", "Password must be at least 3 characters")
+            return
+        if not self.checkpassword(password):
+            qt.QMessageBox.critical(self, "Error", "Master Password Wrong")
             return
 
         try:
