@@ -1,6 +1,5 @@
 import shutil
 
-
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.backends import default_backend
 from pathlib import Path
@@ -17,10 +16,6 @@ class Encryptor:
         self.iterations = iteration
         self.backend = default_backend()
 
-    def _passwordkey(self, password, salt):
-        kdf = PBKDF2HMAC(algorithm=hashes.SHA256(), length=32, salt=salt, iterations=self.iterations,
-                         backend=self.backend)
-        return kdf.derive(password)
 
     def _fixpath(self, filepath):
         if not filepath:
@@ -33,7 +28,7 @@ class Encryptor:
         filepath = filepath.replace("\\\\", "/")
         return filepath
 
-    def encrypt(self, file: str, password: str):
+    def encrypt(self, file: str, magic_code: bytes, key: bytes):
 
         file = self._fixpath(file)
         p = Path(file)
@@ -52,19 +47,20 @@ class Encryptor:
             readfile = file
             newfile = filepath / (filename + fileextension + ".enc")
 
-        password = password.encode('utf-8')
+        keybytes = key
 
         nonce = os.urandom(12)
         salt = os.urandom(16)
 
-        key = self._passwordkey(password, salt)
-        cipher = Cipher(algorithms.AES(key), modes.GCM(nonce), backend=self.backend)
+        cipher = Cipher(algorithms.AES(keybytes), modes.GCM(nonce), backend=self.backend)
         encryptor = cipher.encryptor()
 
-        h = hmac.HMAC(key, hashes.SHA256())
+        h = hmac.HMAC(keybytes, hashes.SHA256())
         h.update(salt)
         passkey = h.finalize()
+
         with open(readfile, "rb") as finput, open(newfile, "wb") as foutput:
+            foutput.write(magic_code)
             foutput.write(salt)
             foutput.write(nonce)
             foutput.write(passkey)
