@@ -1,3 +1,5 @@
+import hashlib
+import os
 from pathlib import Path
 
 from PyQt6 import sip
@@ -11,6 +13,9 @@ from PyQt6.QtCore import Qt
 from styles import *
 from PyQt6.QtWidgets import QStackedWidget, QLineEdit
 
+auth_path = Path("data/folder5")
+key_path = Path("data/folder5")
+
 
 class UI(qt.QWidget):
     def __init__(self):
@@ -20,9 +25,12 @@ class UI(qt.QWidget):
         self.resize(800, 400)
 
         self.encryptor = Encryptor()
-        self.decryptor = Decryptor()
+        self.decryptor = Decryptor(key_dir=key_path)
         self.filepathenc = ""
         self.filepathdec = ""
+
+        # key
+        self.key_file()
 
         # Active mode flags
         self.enc_mode = "file"
@@ -122,7 +130,7 @@ class UI(qt.QWidget):
         widget.setLayout(full_layout)
 
     def checkpassword(self, passwrd):
-        dir = Path("data/folder5")
+        dir = auth_path
         file = dir / "auth.dat"
         temp = file.read_bytes()
         return bcrypt.checkpw(passwrd.encode(), temp)
@@ -135,7 +143,7 @@ class UI(qt.QWidget):
             return
 
         # Save the password
-        dir = Path("data/folder5")
+        dir = auth_path
         dir.mkdir(parents=True, exist_ok=True)
         file = dir / "auth.dat"
         hashed = bcrypt.hashpw(password.encode(), bcrypt.gensalt())
@@ -154,6 +162,7 @@ class UI(qt.QWidget):
 
         self.loginui(self.page0)
         self.stack.setCurrentIndex(0)
+
         qt.QMessageBox.information(self, "Success", "Password saved! Please login now.")
 
     def handle_login(self, passline):
@@ -168,7 +177,7 @@ class UI(qt.QWidget):
             passline.clear()
 
     def checkdir(self):
-        dir = Path("data/folder5")
+        dir = auth_path
         file = dir / "auth.dat"
         if not dir.exists():
             dir.mkdir(parents=True, exist_ok=True)
@@ -296,6 +305,35 @@ class UI(qt.QWidget):
             self.filepathdec = str(path)
             self.linedec.setText(self.filepathdec)
 
+    # magic key
+    def key_file(self):
+        key_path.mkdir(parents=True, exist_ok=True)
+        existing = list(key_path.glob("key*.dat"))
+
+        if existing:
+            # Use the first key found
+            keyfile = max(existing, key=lambda f: f.stat().st_mtime)
+            with open(keyfile, "rb") as f:
+                lines = f.read().split(b"\n", 1)
+                magic_code = lines[0].decode()
+                key_bytes = lines[1]
+            self.current_key = (magic_code, key_bytes)
+            return keyfile
+        else:
+            # generate 32-byte AES key
+            key_bytes = os.urandom(32)
+
+            # generate magic code
+            magic_code = os.urandom(16)
+
+            keyfile = key_path / "key1.dat"
+            with open(keyfile, "wb") as f:
+                f.write(magic_code)
+                f.write(key_bytes)
+
+            self.current_key = (magic_code, key_bytes)
+            return keyfile
+
     # Encryption
     def encryptfile(self):
         if not self.filepathenc:
@@ -319,7 +357,8 @@ class UI(qt.QWidget):
             return
 
         try:
-            newfile = self.encryptor.encrypt(self.filepathenc, password)
+            magcode, key = self.current_key
+            newfile = self.encryptor.encrypt(self.filepathenc, magcode, key)
             qt.QMessageBox.information(self, "Success", f"Encrypted: {newfile}")
         except Exception as e:
             qt.QMessageBox.critical(self, "Error", str(e))
@@ -345,7 +384,7 @@ class UI(qt.QWidget):
             return
 
         try:
-            newfile = self.decryptor.decrypt(self.filepathdec, password)
+            newfile = self.decryptor.decrypt(self.filepathdec)
             qt.QMessageBox.information(self, "Success", f"Decrypted: {newfile}")
         except Exception as e:
             qt.QMessageBox.critical(self, "Error", str(e))
