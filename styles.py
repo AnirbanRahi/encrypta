@@ -1,7 +1,7 @@
 active_button = """
-border: 2px solid blue;
-background-color: white;
-color: black;
+border: 2px solid black;
+background-color: black;
+color: white;
 font-weight: bold;
 padding: 6px;
 """
@@ -24,7 +24,7 @@ min-width: 300px;
 
 enc_dec_button = """
 QPushButton {
-    border: 2px solid green;
+    border: 2px solid black;
     background-color: white;
     color: black;
     font-weight: bold;
@@ -34,11 +34,11 @@ QPushButton {
 }
 
 QPushButton:hover {
-    background-color: lightblue;
+    background-color: grey;
 }
 
 QPushButton:pressed {
-    background-color: darkblue;
+    background-color: black;
     color: white;
 }
 """
