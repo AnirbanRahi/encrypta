@@ -4,8 +4,6 @@ from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.backends import default_backend
 from pathlib import Path
 import os
-from cryptography.hazmat.primitives import hashes
-
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 from cryptography.hazmat.primitives import hmac, hashes
 
@@ -28,7 +26,7 @@ class Encryptor:
         filepath = filepath.replace("\\\\", "/")
         return filepath
 
-    def encrypt(self, file: str, magic_code: bytes, key: bytes):
+    def encrypt(self, file: str, password: str):
 
         file = self._fixpath(file)
         p = Path(file)
@@ -47,23 +45,32 @@ class Encryptor:
             readfile = file
             newfile = filepath / (filename + fileextension + ".enc")
 
-        keybytes = key
 
         nonce = os.urandom(12)
         salt = os.urandom(16)
+        password = password.encode('utf-8')
+
+        kdf = PBKDF2HMAC(
+            algorithm=hashes.SHA256(),
+            length=32,
+            salt=salt,
+            iterations=self.iterations,
+            backend=self.backend
+        )
+        keybytes = kdf.derive(password)
+
+        verifier = hashes.Hash(hashes.SHA256(), backend=self.backend)
+        verifier.update(keybytes)
+        verifier = verifier.finalize()[:16]
 
         cipher = Cipher(algorithms.AES(keybytes), modes.GCM(nonce), backend=self.backend)
         encryptor = cipher.encryptor()
 
-        h = hmac.HMAC(keybytes, hashes.SHA256())
-        h.update(salt)
-        passkey = h.finalize()
-
         with open(readfile, "rb") as finput, open(newfile, "wb") as foutput:
-            foutput.write(magic_code)
             foutput.write(salt)
             foutput.write(nonce)
-            foutput.write(passkey)
+            foutput.write(verifier)
+
             while True:
                 data = finput.read(self.readsize)  # try to read upto readsize and return it
                 if not data:
