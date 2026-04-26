@@ -1,11 +1,7 @@
-import os
 from pathlib import Path
 
 from PyQt6 import sip
 import bcrypt
-from encryption import Encryptor
-from decryption import Decryptor
-import sys
 import PyQt6.QtWidgets as qt
 from PyQt6.QtGui import QFont, QColor, QPalette, QPixmap
 from PyQt6.QtCore import Qt
@@ -13,8 +9,6 @@ from styles import *
 from PyQt6.QtWidgets import QStackedWidget, QLineEdit
 
 auth_path = Path("data/folder5")
-key_path = Path("data/folder5")
-
 
 class Loginui:
 
@@ -47,7 +41,7 @@ class Loginui:
         formlayout = qt.QVBoxLayout()
         formlayout.setContentsMargins(0, 0, 0, 0)
         formlayout.setSpacing(20)
-
+        passline = self.parent.findChild(QLineEdit)
         passwordset = self.checkdir()
 
         passline = QLineEdit()

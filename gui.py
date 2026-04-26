@@ -1,23 +1,16 @@
 import hashlib
 import os
 from pathlib import Path
-
-from PyQt6 import sip
 import bcrypt
 from encryption import Encryptor
 from decryption import Decryptor
 import sys
 import PyQt6.QtWidgets as qt
-from PyQt6.QtGui import QFont, QColor, QPalette, QPixmap
-from PyQt6.QtCore import Qt
-from styles import *
-from PyQt6.QtWidgets import QStackedWidget, QLineEdit
+from PyQt6.QtGui import QFont, QColor, QPalette
 from loginui import Loginui
 from homeui import Mainpage
 
 auth_path = Path("data/folder5")
-key_path = Path("data/folder5")
-
 
 class UI(qt.QWidget):
     def __init__(self):
@@ -27,10 +20,7 @@ class UI(qt.QWidget):
         self.resize(800, 400)
 
         self.encryptor = Encryptor()
-        self.decryptor = Decryptor(key_dir=key_path)
-
-        # key
-        self.key_file()
+        self.decryptor = Decryptor()
 
         # Set white background, black text
         palette = QPalette()
@@ -59,46 +49,11 @@ class UI(qt.QWidget):
         main_layout.addWidget(self.stack)
         self.setLayout(main_layout)
 
-    # magic key
-    def key_file(self):
-        key_path.mkdir(parents=True, exist_ok=True)
-        existing = list(key_path.glob("key*.dat"))
-
-        if existing:
-            keyfile = max(existing, key=lambda f: f.stat().st_mtime)
-            with open(keyfile, "rb") as f:
-                magic_code = f.read(16)  # read first 16 bytes
-                key_bytes = f.read()  # rest is key
-            self.current_key = (magic_code, key_bytes)
-            return keyfile
-        else:
-            key_bytes = os.urandom(32)
-            magic_code = os.urandom(16)
-
-            keyfile = key_path / "key1.dat"
-            with open(keyfile, "wb") as f:
-                f.write(magic_code)
-                f.write(key_bytes)
-
-            self.current_key = (magic_code, key_bytes)
-            return keyfile
-
     def checkpassword(self, passwrd):
         dir = auth_path
         file = dir / "auth.dat"
         temp = file.read_bytes()
         return bcrypt.checkpw(passwrd.encode(), temp)
-
-    def checkdir(self):
-        dir = auth_path
-        file = dir / "auth.dat"
-        if not dir.exists():
-            dir.mkdir(parents=True, exist_ok=True)
-
-        if not file.exists():
-            return False
-        else:
-            return True
 
     # Encryption
     def encryptfile(self, path):
@@ -127,8 +82,7 @@ class UI(qt.QWidget):
             return
 
         try:
-            magcode, key = self.current_key
-            newfile = self.encryptor.encrypt(path, magcode, key)
+            newfile = self.encryptor.encrypt(path, password)
             qt.QMessageBox.information(self, "Success", f"Encrypted: {newfile}")
         except Exception as e:
             qt.QMessageBox.critical(self, "Error", str(e))
@@ -159,7 +113,7 @@ class UI(qt.QWidget):
             return
 
         try:
-            newfile = self.decryptor.decrypt(path)
+            newfile = self.decryptor.decrypt(path,password)
             qt.QMessageBox.information(self, "Success", f"Decrypted: {newfile}")
         except Exception as e:
             qt.QMessageBox.critical(self, "Error", str(e))
@@ -168,6 +122,5 @@ class UI(qt.QWidget):
 if __name__ == "__main__":
     app = qt.QApplication(sys.argv)
     window = UI()
-    window.checkdir()
     window.show()
     sys.exit(app.exec())
