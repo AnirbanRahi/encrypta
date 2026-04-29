@@ -9,8 +9,23 @@ import PyQt6.QtWidgets as qt
 from PyQt6.QtGui import QFont, QColor, QPalette
 from loginui import Loginui
 from homeui import Mainpage
+from PyQt6.QtWidgets import QMessageBox, QInputDialog
 
-auth_path = Path("data/folder5")
+
+def get_base_path():
+    if getattr(sys, "frozen", False):
+        base = Path(os.getenv("APPDATA")) / "AES_Encryptor"
+    else:
+        # Running from source (your IDE / terminal)
+        base = Path("data/folder5")
+
+    base.mkdir(parents=True, exist_ok=True)
+    return base
+
+
+BASE_DIR = get_base_path()
+auth_path = BASE_DIR / "auth"
+
 
 class UI(qt.QWidget):
     def __init__(self):
@@ -21,6 +36,7 @@ class UI(qt.QWidget):
 
         self.encryptor = Encryptor()
         self.decryptor = Decryptor()
+        auth_path.mkdir(parents=True, exist_ok=True)
 
         # Set white background, black text
         palette = QPalette()
@@ -33,7 +49,7 @@ class UI(qt.QWidget):
 
         # login page
         self.page0 = qt.QWidget()
-        self.login_ui = Loginui()
+        self.login_ui = Loginui(auth_path)
         self.login_ui.loginui(self.page0, stack=self.stack)
         self.stack.addWidget(self.page0)
 
@@ -50,73 +66,75 @@ class UI(qt.QWidget):
         self.setLayout(main_layout)
 
     def checkpassword(self, passwrd):
-        dir = auth_path
-        file = dir / "auth.dat"
+        file = auth_path / "auth.dat"
+        if not file.exists():
+            return False
         temp = file.read_bytes()
         return bcrypt.checkpw(passwrd.encode(), temp)
 
     # Encryption
-    def encryptfile(self, path):
+    def encryptfile(self, path, password):
         if not path:
             qt.QMessageBox.critical(self, "Error", "No file or folder selected for encryption")
-            return
+            return False
 
         string_path = Path(path)
 
         if not string_path.exists():
             qt.QMessageBox.critical(self, "Error", "Selected path does not exist")
-            return
+            return False
 
         if string_path.name.endswith(".enc"):
             qt.QMessageBox.critical(self, "Error", "This file is already encrypted.")
-            return
+            return False
 
-        password, ok = qt.QInputDialog.getText(self, "Ask Password", "Enter Master Password:")
-
-        if not ok or not password or len(password) < 3:
+        if not password or len(password) < 3:
             qt.QMessageBox.critical(self, "Error", "Password must be at least 3 characters")
-            return
+            return False
 
         if not self.checkpassword(password):
-            qt.QMessageBox.critical(self, "Error", "Master Password Wrong")
-            return
+            qt.QMessageBox.critical(self, "Error", "Password is wrong")
+            return False
 
         try:
             newfile = self.encryptor.encrypt(path, password)
             qt.QMessageBox.information(self, "Success", f"Encrypted: {newfile}")
+            return True
         except Exception as e:
             qt.QMessageBox.critical(self, "Error", str(e))
+            return False
 
     #  Decryption
-    def decryptfile(self, path):
+    def decryptfile(self, path, password):
         if not path:
             qt.QMessageBox.critical(self, "Error", "No file or folder selected for decryption")
-            return
+            return False
 
         string_path = Path(path)
 
         if not string_path.exists():
             qt.QMessageBox.critical(self, "Error", "Selected path does not exist")
-            return
+            return False
 
         if not string_path.name.endswith(".enc"):
             qt.QMessageBox.critical(self, "Error", "This file is not encrypted.")
-            return
+            return False
 
-        password, ok = qt.QInputDialog.getText(self, "Ask Password", "Enter Master Password:")
-        if not ok or not password or len(password) < 3:
+        if not password or len(password) < 3:
             qt.QMessageBox.critical(self, "Error", "Password must be at least 3 characters")
-            return
+            return False
 
         if not self.checkpassword(password):
-            qt.QMessageBox.critical(self, "Error", "Master Password Wrong")
-            return
+            qt.QMessageBox.critical(self, "Error", "Password is wrong")
+            return False
 
         try:
-            newfile = self.decryptor.decrypt(path,password)
+            newfile = self.decryptor.decrypt(path, password)
             qt.QMessageBox.information(self, "Success", f"Decrypted: {newfile}")
+            return  True
         except Exception as e:
             qt.QMessageBox.critical(self, "Error", str(e))
+            return False
 
 
 if __name__ == "__main__":

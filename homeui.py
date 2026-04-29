@@ -23,8 +23,6 @@ class Mainpage(qt.QWidget):
         main_layout.addWidget(enc_label)
 
         # Mode buttons
-        self.filepathenc = ""
-        self.filepathdec = ""
         enc_mode_layout = qt.QHBoxLayout()
         self.enc_file_btn = qt.QPushButton("Encrypt File")
         self.enc_folder_btn = qt.QPushButton("Encrypt Folder")
@@ -56,11 +54,28 @@ class Mainpage(qt.QWidget):
         enc_browse_layout.addWidget(browse_btn_enc)
         main_layout.addLayout(enc_browse_layout)
 
+        # Encryption Password
+        enc_pass_layout = qt.QHBoxLayout()
+        self.enc_password = qt.QLineEdit()
+        self.enc_password.setPlaceholderText("Enter encryption password")
+        self.enc_password.setEchoMode(QLineEdit.EchoMode.Password)
+        self.enc_password.setStyleSheet(line_style)
+        self.enc_password.setClearButtonEnabled(True)
+        self.enc_toggle_btn = qt.QPushButton("Show")
+        self.enc_toggle_btn.setCheckable(True)
+        self.enc_toggle_btn.setStyleSheet(inactive_button)
+        self.enc_toggle_btn.clicked.connect(self.toggle_enc_password)
+        enc_pass_layout.addWidget(self.enc_password)
+        enc_pass_layout.addWidget(self.enc_toggle_btn)
+        main_layout.addLayout(enc_pass_layout)
+
         # Encrypt button
         enc_action_btn = qt.QPushButton("Encrypt")
         enc_action_btn.setFont(font_button)
         enc_action_btn.setStyleSheet(enc_dec_button)
-        enc_action_btn.clicked.connect(lambda x: self.encryptfile(self.filepathenc))
+        enc_action_btn.clicked.connect(
+            lambda _: self.handle_encrypt()
+        )
         main_layout.addWidget(enc_action_btn)
 
         # Decryption Section
@@ -91,11 +106,28 @@ class Mainpage(qt.QWidget):
         dec_browse_layout.addWidget(browse_btn_dec)
         main_layout.addLayout(dec_browse_layout)
 
+        # Decryption Password
+        dec_pass_layout = qt.QHBoxLayout()
+        self.dec_password = qt.QLineEdit()
+        self.dec_password.setPlaceholderText("Enter decryption password")
+        self.dec_password.setEchoMode(QLineEdit.EchoMode.Password)
+        self.dec_password.setStyleSheet(line_style)
+        self.dec_password.setClearButtonEnabled(True)
+        self.dec_toggle_btn = qt.QPushButton("Show")
+        self.dec_toggle_btn.setCheckable(True)
+        self.dec_toggle_btn.setStyleSheet(inactive_button)
+        self.dec_toggle_btn.clicked.connect(self.toggle_dec_password)
+        dec_pass_layout.addWidget(self.dec_password)
+        dec_pass_layout.addWidget(self.dec_toggle_btn)
+        main_layout.addLayout(dec_pass_layout)
+
         # Decrypt button
         dec_action_btn = qt.QPushButton("Decrypt")
         dec_action_btn.setStyleSheet(enc_dec_button)
         dec_action_btn.setFont(font_button)
-        dec_action_btn.clicked.connect(lambda x: self.decryptfile(self.filepathdec))
+        dec_action_btn.clicked.connect(
+            lambda _: self.handle_decrypt()
+        )
         main_layout.addWidget(dec_action_btn)
 
         parent.setLayout(main_layout)
@@ -104,7 +136,6 @@ class Mainpage(qt.QWidget):
         self.enc_mode = mode
         self.update_enc_mode_style()
         self.lineenc.clear()
-        self.filepathenc = ""
 
     def update_enc_mode_style(self):
         if self.enc_mode == "file":
@@ -114,6 +145,43 @@ class Mainpage(qt.QWidget):
             self.enc_file_btn.setStyleSheet(inactive_button)
             self.enc_folder_btn.setStyleSheet(active_button)
 
+    def handle_encrypt(self):
+        success = self.encryptfile(self.lineenc.text(), self.enc_password.text())
+
+        if success:
+            self.lineenc.clear()
+            self.enc_password.clear()
+            self.enc_toggle_btn.setChecked(False)
+            self.enc_toggle_btn.setText("Show")
+            self.enc_password.setEchoMode(QLineEdit.EchoMode.Password)
+
+    def handle_decrypt(self):
+        success = self.decryptfile(self.linedec.text(), self.dec_password.text())
+
+        if success:
+            self.linedec.clear()
+            self.dec_password.clear()
+
+            self.dec_toggle_btn.setChecked(False)
+            self.dec_toggle_btn.setText("Show")
+            self.dec_password.setEchoMode(QLineEdit.EchoMode.Password)
+
+    def toggle_enc_password(self):
+        if self.enc_toggle_btn.isChecked():
+            self.enc_password.setEchoMode(QLineEdit.EchoMode.Normal)
+            self.enc_toggle_btn.setText("Hide")
+        else:
+            self.enc_password.setEchoMode(QLineEdit.EchoMode.Password)
+            self.enc_toggle_btn.setText("Show")
+
+    def toggle_dec_password(self):
+        if self.dec_toggle_btn.isChecked():
+            self.dec_password.setEchoMode(QLineEdit.EchoMode.Normal)
+            self.dec_toggle_btn.setText("Hide")
+        else:
+            self.dec_password.setEchoMode(QLineEdit.EchoMode.Password)
+            self.dec_toggle_btn.setText("Show")
+
     # Browse
     def file_or_folder_enc(self):
         if self.enc_mode == "file":
@@ -121,11 +189,9 @@ class Mainpage(qt.QWidget):
         else:
             path = qt.QFileDialog.getExistingDirectory(self, "Select Folder")
         if path:
-            self.filepathenc = str(path)
-            self.lineenc.setText(self.filepathenc)
+            self.lineenc.setText(path)
 
     def file_dec(self):
         path, _ = qt.QFileDialog.getOpenFileName(self, "Select File")
         if path:
-            self.filepathdec = str(path)
-            self.linedec.setText(self.filepathdec)
+            self.linedec.setText(path)
