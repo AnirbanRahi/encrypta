@@ -1,8 +1,10 @@
 import PyQt6.QtWidgets as qt
-from PyQt6.QtGui import QFont, QColor, QPalette, QPixmap
+from PyQt6.QtGui import QFont, QColor, QPalette, QPixmap, QIcon
 from styles import *
 from PyQt6.QtWidgets import QStackedWidget, QLineEdit
 from PyQt6.QtCore import Qt
+from PyQt6.QtCore import QSize
+from PyQt6.QtGui import QIcon
 
 
 class Mainpage(qt.QWidget):
@@ -11,13 +13,16 @@ class Mainpage(qt.QWidget):
         self.stack = stack
         self.encryptfile = encryptfile
         self.decryptfile = decryptfile
-        self.buttonwidth = 80
+        self.buttonwidth = 60
+        self.height = 40
+        self.iconsize = 22
+        self.ffbutton=30
 
         font_header = QFont("Arial", 14, QFont.Weight.Bold)
         font_button = QFont("Arial", 11)
 
         main_layout = qt.QHBoxLayout()
-        main_layout.setSpacing(20)
+        main_layout.setSpacing(25)
 
         # Encryption Section
         enc_layout = qt.QVBoxLayout()
@@ -37,7 +42,9 @@ class Mainpage(qt.QWidget):
         # Mode buttons
         enc_mode_layout = qt.QHBoxLayout()
         self.enc_file_btn = qt.QPushButton("Encrypt File")
+        self.enc_file_btn.setFixedHeight(self.ffbutton)
         self.enc_folder_btn = qt.QPushButton("Encrypt Folder")
+        self.enc_folder_btn.setFixedHeight(self.ffbutton)
         self.enc_file_btn.setCheckable(True)
         self.enc_folder_btn.setCheckable(True)
         self.enc_file_btn.setFont(font_button)
@@ -55,31 +62,43 @@ class Mainpage(qt.QWidget):
 
         # Browse and path
         enc_browse_layout = qt.QHBoxLayout()
+        enc_browse_layout.setSpacing(0)
         self.lineenc = qt.QLineEdit()
+        self.lineenc.setFixedHeight(self.height)
         self.lineenc.setPlaceholderText("Select file or folder to encrypt")
         self.lineenc.setStyleSheet(line_style)
-        browse_btn_enc = qt.QPushButton("Browse")
-        browse_btn_enc.setFixedWidth(self.buttonwidth)
-        browse_btn_enc.setFont(font_button)
-        browse_btn_enc.setStyleSheet(inactive_button)
-        browse_btn_enc.clicked.connect(self.file_or_folder_enc)
+
+        iconbrowseenc = qt.QPushButton()
+        iconbrowseenc.setIcon(QIcon("materials/folder.png"))
+        iconbrowseenc.setFixedWidth(self.buttonwidth)
+        iconbrowseenc.setStyleSheet(icons)
+        iconbrowseenc.setFixedHeight(self.height)
+        iconbrowseenc.setIconSize(QSize(self.iconsize, self.iconsize))
+        iconbrowseenc.clicked.connect(self.file_or_folder_enc)
+
         enc_browse_layout.addWidget(self.lineenc)
-        enc_browse_layout.addWidget(browse_btn_enc)
+        enc_browse_layout.addWidget(iconbrowseenc)
         enc_layout.addLayout(enc_browse_layout)
 
         # Encryption Password
         enc_pass_layout = qt.QHBoxLayout()
+        enc_pass_layout.setSpacing(0)
         self.enc_password = qt.QLineEdit()
+        self.enc_password.setFixedHeight(self.height)
         self.enc_password.setPlaceholderText("Enter encryption password")
         self.enc_password.setEchoMode(QLineEdit.EchoMode.Password)
         self.enc_password.setStyleSheet(line_style)
         self.enc_password.setClearButtonEnabled(True)
-        self.enc_toggle_btn = qt.QPushButton("Show")
-        self.enc_toggle_btn.setFixedWidth(self.buttonwidth)
-        self.enc_toggle_btn.setFont(font_button)
+
+        self.enc_toggle_btn = qt.QPushButton()
         self.enc_toggle_btn.setCheckable(True)
-        self.enc_toggle_btn.setStyleSheet(inactive_button)
+        self.enc_toggle_btn.setFixedWidth(self.buttonwidth)
+        self.enc_toggle_btn.setIcon(QIcon("materials/invisible.png"))
+        self.enc_toggle_btn.setFixedHeight(self.height)
+        self.enc_toggle_btn.setIconSize(QSize(self.iconsize, self.iconsize))
+        self.enc_toggle_btn.setStyleSheet(icons)
         self.enc_toggle_btn.clicked.connect(self.toggle_enc_password)
+
         enc_pass_layout.addWidget(self.enc_password)
         enc_pass_layout.addWidget(self.enc_toggle_btn)
         enc_layout.addLayout(enc_pass_layout)
@@ -113,6 +132,7 @@ class Mainpage(qt.QWidget):
         # Mode buttons
         dec_mode_layout = qt.QHBoxLayout()
         self.dec_file_btn = qt.QPushButton("Decrypt File")
+        self.dec_file_btn.setFixedHeight(self.ffbutton)
         self.dec_file_btn.setFont(font_button)
         self.dec_file_btn.setCheckable(True)
         self.dec_file_btn.setChecked(True)
@@ -122,31 +142,44 @@ class Mainpage(qt.QWidget):
 
         # Browse and path
         dec_browse_layout = qt.QHBoxLayout()
+        dec_browse_layout.setSpacing(0)
         self.linedec = qt.QLineEdit()
+        self.linedec.setFixedHeight(self.height)
         self.linedec.setPlaceholderText("Select file to decrypt")
         self.linedec.setStyleSheet(line_style)
-        browse_btn_dec = qt.QPushButton("Browse")
-        browse_btn_dec.setFixedWidth(self.buttonwidth)
-        browse_btn_dec.setFont(font_button)
-        browse_btn_dec.clicked.connect(self.file_dec)
-        browse_btn_dec.setStyleSheet(inactive_button)
+
+        iconbrowsedec = qt.QPushButton()
+        iconbrowsedec.setIcon(QIcon("materials/folder.png"))
+        iconbrowsedec.setFixedWidth(self.buttonwidth)
+        iconbrowsedec.setFixedHeight(self.height)
+        iconbrowsedec.setStyleSheet(icons)
+        iconbrowsedec.setIconSize(QSize(self.iconsize, self.iconsize))
+        iconbrowsedec.clicked.connect(self.file_dec)
+
         dec_browse_layout.addWidget(self.linedec)
-        dec_browse_layout.addWidget(browse_btn_dec)
+        dec_browse_layout.addWidget(iconbrowsedec)
+
         dec_layout.addLayout(dec_browse_layout)
 
         # Decryption Password
         dec_pass_layout = qt.QHBoxLayout()
+        dec_pass_layout.setSpacing(0)
         self.dec_password = qt.QLineEdit()
+        self.dec_password.setFixedHeight(self.height)
         self.dec_password.setPlaceholderText("Enter decryption password")
         self.dec_password.setEchoMode(QLineEdit.EchoMode.Password)
         self.dec_password.setStyleSheet(line_style)
         self.dec_password.setClearButtonEnabled(True)
-        self.dec_toggle_btn = qt.QPushButton("Show")
-        self.dec_toggle_btn.setFixedWidth(self.buttonwidth)
-        self.dec_toggle_btn.setFont(font_button)
+
+        self.dec_toggle_btn = qt.QPushButton()
         self.dec_toggle_btn.setCheckable(True)
-        self.dec_toggle_btn.setStyleSheet(inactive_button)
+        self.dec_toggle_btn.setFixedWidth(self.buttonwidth)
+        self.dec_toggle_btn.setFixedHeight(self.height)
+        self.dec_toggle_btn.setIcon(QIcon("materials/invisible.png"))
+        self.dec_toggle_btn.setIconSize(QSize(self.iconsize, self.iconsize))
+        self.dec_toggle_btn.setStyleSheet(icons)
         self.dec_toggle_btn.clicked.connect(self.toggle_dec_password)
+
         dec_pass_layout.addWidget(self.dec_password)
         dec_pass_layout.addWidget(self.dec_toggle_btn)
         dec_layout.addLayout(dec_pass_layout)
@@ -190,7 +223,7 @@ class Mainpage(qt.QWidget):
             self.lineenc.clear()
             self.enc_password.clear()
             self.enc_toggle_btn.setChecked(False)
-            self.enc_toggle_btn.setText("Show")
+            self.enc_toggle_btn.setIcon(QIcon("materials/invisible.png"))
             self.enc_password.setEchoMode(QLineEdit.EchoMode.Password)
 
     def handle_decrypt(self):
@@ -201,24 +234,24 @@ class Mainpage(qt.QWidget):
             self.dec_password.clear()
 
             self.dec_toggle_btn.setChecked(False)
-            self.dec_toggle_btn.setText("Show")
+            self.dec_toggle_btn.setIcon(QIcon("materials/invisible.png"))
             self.dec_password.setEchoMode(QLineEdit.EchoMode.Password)
 
     def toggle_enc_password(self):
         if self.enc_toggle_btn.isChecked():
             self.enc_password.setEchoMode(QLineEdit.EchoMode.Normal)
-            self.enc_toggle_btn.setText("Hide")
+            self.enc_toggle_btn.setIcon(QIcon("materials/visible.png"))
         else:
             self.enc_password.setEchoMode(QLineEdit.EchoMode.Password)
-            self.enc_toggle_btn.setText("Show")
+            self.enc_toggle_btn.setIcon(QIcon("materials/invisible.png"))
 
     def toggle_dec_password(self):
         if self.dec_toggle_btn.isChecked():
             self.dec_password.setEchoMode(QLineEdit.EchoMode.Normal)
-            self.dec_toggle_btn.setText("Hide")
+            self.dec_toggle_btn.setIcon(QIcon("materials/visible.png"))
         else:
             self.dec_password.setEchoMode(QLineEdit.EchoMode.Password)
-            self.dec_toggle_btn.setText("Show")
+            self.dec_toggle_btn.setIcon(QIcon("materials/invisible.png"))
 
     # Browse
     def file_or_folder_enc(self):

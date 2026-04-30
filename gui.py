@@ -33,7 +33,7 @@ class UI(qt.QWidget):
         super().__init__()
 
         self.setWindowTitle("AES-GCM Encryption Tool")
-        self.resize(800, 200)
+        self.setFixedSize(800, 200)
         self.setMinimumSize(0, 0)
         self.setWindowIcon(QIcon("materials/appicon.png"))
 
