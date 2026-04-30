@@ -28,22 +28,20 @@ padding-left: 3px;
 
 enc_dec_button = """
 QPushButton {
-    border: 2px solid black;
+    border: 1.5px solid black;
     background-color: white;
     color: black;
+    font-size: 20px;
     font-weight: bold;
-    padding: 6px;
-    min-width: 80px;
-    min-height: 20px;
+    min-height: 30px;
 }
 
 QPushButton:hover {
-    background-color: grey;
+    background-color: #b5b5b5;
 }
 
 QPushButton:pressed {
-    background-color: black;
-    color: white;
+    background-color: #8f8f8f;
 }
 """
 
