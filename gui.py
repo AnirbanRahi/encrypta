@@ -10,7 +10,8 @@ from PyQt6.QtGui import QFont, QColor, QPalette
 from loginui import Loginui
 from homeui import Mainpage
 from PyQt6.QtWidgets import QMessageBox, QInputDialog
-
+from PyQt6.QtGui import QFont, QColor, QPalette, QIcon
+from ctypes import windll, byref, sizeof, c_int
 
 def get_base_path():
     if getattr(sys, "frozen", False):
@@ -32,7 +33,9 @@ class UI(qt.QWidget):
         super().__init__()
 
         self.setWindowTitle("AES-GCM Encryption Tool")
-        self.resize(800, 400)
+        self.resize(800, 200)
+        self.setMinimumSize(0, 0)
+        self.setWindowIcon(QIcon("materials/appicon.png"))
 
         self.encryptor = Encryptor()
         self.decryptor = Decryptor()
@@ -64,6 +67,14 @@ class UI(qt.QWidget):
         main_layout.setSpacing(0)
         main_layout.addWidget(self.stack)
         self.setLayout(main_layout)
+        #self.setFixedHeight(400)
+
+    def showEvent(self, event):
+        super().showEvent(event)
+        HWND = int(self.winId())
+        r1 = windll.dwmapi.DwmSetWindowAttribute(HWND, 35, byref(c_int(0xFFFFFF)), sizeof(c_int))
+        r2 = windll.dwmapi.DwmSetWindowAttribute(HWND, 20, byref(c_int(0)), sizeof(c_int))
+        windll.dwmapi.DwmSetWindowAttribute(HWND, 36, byref(c_int(0x000000)), sizeof(c_int))
 
     def checkpassword(self, passwrd):
         file = auth_path / "auth.dat"

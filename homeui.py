@@ -2,6 +2,7 @@ import PyQt6.QtWidgets as qt
 from PyQt6.QtGui import QFont, QColor, QPalette, QPixmap
 from styles import *
 from PyQt6.QtWidgets import QStackedWidget, QLineEdit
+from PyQt6.QtCore import Qt
 
 
 class Mainpage(qt.QWidget):
@@ -10,17 +11,28 @@ class Mainpage(qt.QWidget):
         self.stack = stack
         self.encryptfile = encryptfile
         self.decryptfile = decryptfile
+        self.buttonwidth = 80
 
         font_header = QFont("Arial", 14, QFont.Weight.Bold)
         font_button = QFont("Arial", 11)
 
-        main_layout = qt.QVBoxLayout()
+        main_layout = qt.QHBoxLayout()
         main_layout.setSpacing(20)
 
         # Encryption Section
+        enc_layout = qt.QVBoxLayout()
+        enc_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
+
+        # Header
+        enc_header_layout = qt.QHBoxLayout()
+        iconenc = qt.QLabel()
+        iconenc.setPixmap(QPixmap("materials/encicon.png").scaled(24, 24))
         enc_label = qt.QLabel("Encryption")
         enc_label.setFont(font_header)
-        main_layout.addWidget(enc_label)
+        enc_header_layout.addWidget(iconenc)
+        enc_header_layout.addWidget(enc_label)
+        enc_header_layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
+        enc_layout.addLayout(enc_header_layout)
 
         # Mode buttons
         enc_mode_layout = qt.QHBoxLayout()
@@ -39,7 +51,7 @@ class Mainpage(qt.QWidget):
 
         enc_mode_layout.addWidget(self.enc_file_btn)
         enc_mode_layout.addWidget(self.enc_folder_btn)
-        main_layout.addLayout(enc_mode_layout)
+        enc_layout.addLayout(enc_mode_layout)
 
         # Browse and path
         enc_browse_layout = qt.QHBoxLayout()
@@ -47,12 +59,13 @@ class Mainpage(qt.QWidget):
         self.lineenc.setPlaceholderText("Select file or folder to encrypt")
         self.lineenc.setStyleSheet(line_style)
         browse_btn_enc = qt.QPushButton("Browse")
+        browse_btn_enc.setFixedWidth(self.buttonwidth)
         browse_btn_enc.setFont(font_button)
         browse_btn_enc.setStyleSheet(inactive_button)
         browse_btn_enc.clicked.connect(self.file_or_folder_enc)
         enc_browse_layout.addWidget(self.lineenc)
         enc_browse_layout.addWidget(browse_btn_enc)
-        main_layout.addLayout(enc_browse_layout)
+        enc_layout.addLayout(enc_browse_layout)
 
         # Encryption Password
         enc_pass_layout = qt.QHBoxLayout()
@@ -62,12 +75,14 @@ class Mainpage(qt.QWidget):
         self.enc_password.setStyleSheet(line_style)
         self.enc_password.setClearButtonEnabled(True)
         self.enc_toggle_btn = qt.QPushButton("Show")
+        self.enc_toggle_btn.setFixedWidth(self.buttonwidth)
+        self.enc_toggle_btn.setFont(font_button)
         self.enc_toggle_btn.setCheckable(True)
         self.enc_toggle_btn.setStyleSheet(inactive_button)
         self.enc_toggle_btn.clicked.connect(self.toggle_enc_password)
         enc_pass_layout.addWidget(self.enc_password)
         enc_pass_layout.addWidget(self.enc_toggle_btn)
-        main_layout.addLayout(enc_pass_layout)
+        enc_layout.addLayout(enc_pass_layout)
 
         # Encrypt button
         enc_action_btn = qt.QPushButton("Encrypt")
@@ -76,12 +91,24 @@ class Mainpage(qt.QWidget):
         enc_action_btn.clicked.connect(
             lambda _: self.handle_encrypt()
         )
-        main_layout.addWidget(enc_action_btn)
+        enc_layout.addWidget(enc_action_btn)
+
+        main_layout.addLayout(enc_layout)
 
         # Decryption Section
+        dec_layout = qt.QVBoxLayout()
+        dec_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
+
+        # Header
+        dec_header_layout = qt.QHBoxLayout()
+        icondec = qt.QLabel()
+        icondec.setPixmap(QPixmap("materials/decicon.png").scaled(24, 24))
         dec_label = qt.QLabel("Decryption")
         dec_label.setFont(font_header)
-        main_layout.addWidget(dec_label)
+        dec_header_layout.addWidget(icondec)
+        dec_header_layout.addWidget(dec_label)
+        dec_header_layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
+        dec_layout.addLayout(dec_header_layout)
 
         # Mode buttons
         dec_mode_layout = qt.QHBoxLayout()
@@ -89,9 +116,9 @@ class Mainpage(qt.QWidget):
         self.dec_file_btn.setFont(font_button)
         self.dec_file_btn.setCheckable(True)
         self.dec_file_btn.setChecked(True)
-        self.dec_file_btn.setStyleSheet(inactive_button)
+        self.dec_file_btn.setStyleSheet(active_button)
         dec_mode_layout.addWidget(self.dec_file_btn)
-        main_layout.addLayout(dec_mode_layout)
+        dec_layout.addLayout(dec_mode_layout)
 
         # Browse and path
         dec_browse_layout = qt.QHBoxLayout()
@@ -99,12 +126,13 @@ class Mainpage(qt.QWidget):
         self.linedec.setPlaceholderText("Select file to decrypt")
         self.linedec.setStyleSheet(line_style)
         browse_btn_dec = qt.QPushButton("Browse")
+        browse_btn_dec.setFixedWidth(self.buttonwidth)
         browse_btn_dec.setFont(font_button)
         browse_btn_dec.clicked.connect(self.file_dec)
         browse_btn_dec.setStyleSheet(inactive_button)
         dec_browse_layout.addWidget(self.linedec)
         dec_browse_layout.addWidget(browse_btn_dec)
-        main_layout.addLayout(dec_browse_layout)
+        dec_layout.addLayout(dec_browse_layout)
 
         # Decryption Password
         dec_pass_layout = qt.QHBoxLayout()
@@ -114,12 +142,14 @@ class Mainpage(qt.QWidget):
         self.dec_password.setStyleSheet(line_style)
         self.dec_password.setClearButtonEnabled(True)
         self.dec_toggle_btn = qt.QPushButton("Show")
+        self.dec_toggle_btn.setFixedWidth(self.buttonwidth)
+        self.dec_toggle_btn.setFont(font_button)
         self.dec_toggle_btn.setCheckable(True)
         self.dec_toggle_btn.setStyleSheet(inactive_button)
         self.dec_toggle_btn.clicked.connect(self.toggle_dec_password)
         dec_pass_layout.addWidget(self.dec_password)
         dec_pass_layout.addWidget(self.dec_toggle_btn)
-        main_layout.addLayout(dec_pass_layout)
+        dec_layout.addLayout(dec_pass_layout)
 
         # Decrypt button
         dec_action_btn = qt.QPushButton("Decrypt")
@@ -128,9 +158,17 @@ class Mainpage(qt.QWidget):
         dec_action_btn.clicked.connect(
             lambda _: self.handle_decrypt()
         )
-        main_layout.addWidget(dec_action_btn)
 
-        parent.setLayout(main_layout)
+        dec_layout.addWidget(dec_action_btn)
+
+        main_layout.addLayout(dec_layout)
+
+        outer = qt.QVBoxLayout()
+        outer.addStretch()
+        outer.addLayout(main_layout)
+        outer.addStretch()
+
+        parent.setLayout(outer)
 
     def set_enc_mode(self, mode):
         self.enc_mode = mode

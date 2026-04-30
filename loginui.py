@@ -1,5 +1,5 @@
 from pathlib import Path
-
+from PyQt6.QtWidgets import QMessageBox
 from PyQt6 import sip
 import bcrypt
 import PyQt6.QtWidgets as qt
@@ -8,11 +8,10 @@ from PyQt6.QtCore import Qt
 from styles import *
 from PyQt6.QtWidgets import QStackedWidget, QLineEdit
 
-auth_path = Path("data/folder5")
-
 class Loginui:
-
-    def loginui(self, parent: qt.QWidget, stack: QStackedWidget):
+    def __init__(self, auth_path):
+        self.auth_path = auth_path
+    def loginui(self, parent, stack):
         self.parent = parent
         self.stack = stack
 
@@ -41,7 +40,6 @@ class Loginui:
         formlayout = qt.QVBoxLayout()
         formlayout.setContentsMargins(0, 0, 0, 0)
         formlayout.setSpacing(20)
-        passline = self.parent.findChild(QLineEdit)
         passwordset = self.checkdir()
 
         passline = QLineEdit()
@@ -78,9 +76,12 @@ class Loginui:
         parent.setLayout(full_layout)
 
     def checkpassword(self, passwrd):
-        dir = auth_path
+        dir = self.auth_path
         file = dir / "auth.dat"
-        temp = file.read_bytes()
+        try:
+            temp = file.read_bytes()
+        except Exception:
+            return False
         return bcrypt.checkpw(passwrd.encode(), temp)
 
     def setpassword(self):
@@ -91,7 +92,7 @@ class Loginui:
             return
 
         # Save the password
-        dir = auth_path
+        dir = self.auth_path
         dir.mkdir(parents=True, exist_ok=True)
         file = dir / "auth.dat"
         hashed = bcrypt.hashpw(password.encode(), bcrypt.gensalt())
@@ -125,7 +126,7 @@ class Loginui:
             passline.clear()
 
     def checkdir(self):
-        dir = auth_path
+        dir = self.auth_path
         file = dir / "auth.dat"
         if not dir.exists():
             dir.mkdir(parents=True, exist_ok=True)
