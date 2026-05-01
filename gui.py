@@ -7,39 +7,22 @@ from decryption import Decryptor
 import sys
 import PyQt6.QtWidgets as qt
 from PyQt6.QtGui import QFont, QColor, QPalette
-from loginui import Loginui
 from homeui import Mainpage
 from PyQt6.QtWidgets import QMessageBox, QInputDialog
 from PyQt6.QtGui import QFont, QColor, QPalette, QIcon
 from ctypes import windll, byref, sizeof, c_int
-
-def get_base_path():
-    if getattr(sys, "frozen", False):
-        base = Path(os.getenv("APPDATA")) / "AES_Encryptor"
-    else:
-        # Running from source (your IDE / terminal)
-        base = Path("data/folder5")
-
-    base.mkdir(parents=True, exist_ok=True)
-    return base
-
-
-BASE_DIR = get_base_path()
-auth_path = BASE_DIR / "auth"
-
 
 class UI(qt.QWidget):
     def __init__(self):
         super().__init__()
 
         self.setWindowTitle("AES-GCM Encryption Tool")
-        self.setFixedSize(800, 200)
+        self.setFixedSize(800, 400)
         self.setMinimumSize(0, 0)
         self.setWindowIcon(QIcon("materials/appicon.png"))
 
         self.encryptor = Encryptor()
         self.decryptor = Decryptor()
-        auth_path.mkdir(parents=True, exist_ok=True)
 
         # Set white background, black text
         palette = QPalette()
@@ -49,12 +32,6 @@ class UI(qt.QWidget):
 
         # Page controls
         self.stack = qt.QStackedWidget()
-
-        # login page
-        self.page0 = qt.QWidget()
-        self.login_ui = Loginui(auth_path)
-        self.login_ui.loginui(self.page0, stack=self.stack)
-        self.stack.addWidget(self.page0)
 
         # home page
         self.page1 = qt.QWidget()
@@ -67,7 +44,6 @@ class UI(qt.QWidget):
         main_layout.setSpacing(0)
         main_layout.addWidget(self.stack)
         self.setLayout(main_layout)
-        #self.setFixedHeight(400)
 
     def showEvent(self, event):
         super().showEvent(event)
@@ -75,13 +51,6 @@ class UI(qt.QWidget):
         r1 = windll.dwmapi.DwmSetWindowAttribute(HWND, 35, byref(c_int(0xFFFFFF)), sizeof(c_int))
         r2 = windll.dwmapi.DwmSetWindowAttribute(HWND, 20, byref(c_int(0)), sizeof(c_int))
         windll.dwmapi.DwmSetWindowAttribute(HWND, 36, byref(c_int(0x000000)), sizeof(c_int))
-
-    def checkpassword(self, passwrd):
-        file = auth_path / "auth.dat"
-        if not file.exists():
-            return False
-        temp = file.read_bytes()
-        return bcrypt.checkpw(passwrd.encode(), temp)
 
     # Encryption
     def encryptfile(self, path, password):
@@ -101,10 +70,6 @@ class UI(qt.QWidget):
 
         if not password or len(password) < 3:
             qt.QMessageBox.critical(self, "Error", "Password must be at least 3 characters")
-            return False
-
-        if not self.checkpassword(password):
-            qt.QMessageBox.critical(self, "Error", "Password is wrong")
             return False
 
         try:
@@ -133,10 +98,6 @@ class UI(qt.QWidget):
 
         if not password or len(password) < 3:
             qt.QMessageBox.critical(self, "Error", "Password must be at least 3 characters")
-            return False
-
-        if not self.checkpassword(password):
-            qt.QMessageBox.critical(self, "Error", "Password is wrong")
             return False
 
         try:

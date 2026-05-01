@@ -24,6 +24,22 @@ class Mainpage(qt.QWidget):
         main_layout = qt.QHBoxLayout()
         main_layout.setSpacing(25)
 
+
+        #image
+        picture = qt.QLabel()
+        pixmap = QPixmap("materials/pic.png")
+        if pixmap.isNull():
+            print("Image failed to load")
+        pixmap = pixmap.scaled(
+            350,
+            350,
+            Qt.AspectRatioMode.KeepAspectRatio,
+            Qt.TransformationMode.SmoothTransformation
+        )
+        picture.setPixmap(pixmap)
+        picture.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
+
         # Encryption Section
         enc_layout = qt.QVBoxLayout()
         enc_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
@@ -198,6 +214,7 @@ class Mainpage(qt.QWidget):
 
         outer = qt.QVBoxLayout()
         outer.addStretch()
+        outer.addWidget(picture, alignment=Qt.AlignmentFlag.AlignCenter)
         outer.addLayout(main_layout)
         outer.addStretch()
 
