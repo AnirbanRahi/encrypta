@@ -12,14 +12,18 @@ from PyQt6.QtWidgets import QMessageBox, QInputDialog
 from PyQt6.QtGui import QFont, QColor, QPalette, QIcon
 from ctypes import windll, byref, sizeof, c_int
 
+def resource_path(path):
+    base = getattr(sys, "_MEIPASS", os.path.abspath("."))
+    return os.path.join(base, path)
+
 class UI(qt.QWidget):
     def __init__(self):
         super().__init__()
 
-        self.setWindowTitle("AES-GCM Encryption Tool")
+        self.setWindowTitle("Encrypta")
         self.setFixedSize(800, 400)
         self.setMinimumSize(0, 0)
-        self.setWindowIcon(QIcon("materials/appicon.png"))
+        self.setWindowIcon(QIcon(resource_path("materials/appicon.png")))
 
         self.encryptor = Encryptor()
         self.decryptor = Decryptor()
