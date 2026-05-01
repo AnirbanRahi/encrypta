@@ -1,1 +1,0 @@
-print("AES-GCM Encryption Tool")
